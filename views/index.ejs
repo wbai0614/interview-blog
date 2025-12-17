@@ -6,18 +6,71 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <header>
-    <h1>Interview Blog</h1>
-    <p>Markdown-powered notes</p>
-  </header>
-  <main>
-    <h2>All Posts</h2>
+<header class="navbar">
+  <div class="container">
+    <h1><a href="/">Interview Blog</a></h1>
+  </div>
+</header>
+
+<div class="blog-container container">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h3>Tags</h3>
     <ul>
-      <% posts.forEach(p => { %>
-        <li><a href="/post/<%= p.slug %>"><%= p.slug.replace('-', ' ') %></a></li>
+      <% allTags.forEach(tag => { %>
+        <li><a href="/?tag=<%= tag %>"><%= tag %></a></li>
       <% }) %>
     </ul>
-  </main>
-  <footer>© 2025 Interview Blog</footer>
+  </aside>
+
+  <!-- Main content -->
+  <section class="posts-section">
+
+    <!-- Featured posts -->
+    <% if (featuredPosts.length) { %>
+      <h2>Featured Posts</h2>
+      <div class="posts-grid">
+        <% featuredPosts.forEach(p => { %>
+          <div class="post-card featured">
+            <a href="/post/<%= p.slug %>">
+              <h3><%= p.slug.replace('-', ' ') %></h3>
+            </a>
+            <div class="excerpt"><%- p.excerpt %></div>
+            <div class="post-tags">
+              <% p.tags.forEach(tag => { %>
+                <span class="tag"><%= tag %></span>
+              <% }) %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <!-- Regular posts -->
+    <h2>All Posts</h2>
+    <div class="posts-grid">
+      <% regularPosts.forEach(p => { %>
+        <div class="post-card">
+          <a href="/post/<%= p.slug %>">
+            <h3><%= p.slug.replace('-', ' ') %></h3>
+          </a>
+          <div class="excerpt"><%- p.excerpt %></div>
+          <div class="post-tags">
+            <% p.tags.forEach(tag => { %>
+              <span class="tag"><%= tag %></span>
+            <% }) %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+  </section>
+
+</div>
+
+<footer>
+  © 2025 Interview Blog
+</footer>
 </body>
 </html>

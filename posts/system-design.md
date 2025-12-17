@@ -1,3 +1,5 @@
+<!-- tags: system-design, scalability, interview; featured: true -->
+
 # System Design Tip
 
 - Start with requirements
