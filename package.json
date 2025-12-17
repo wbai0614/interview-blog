@@ -1,0 +1,14 @@
+{
+  "name": "interview-blog",
+  "version": "1.0.0",
+  "description": "Markdown-powered multi-page interview blog",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ejs": "^3.1.9",
+    "marked": "^5.0.2"
+  }
+}
