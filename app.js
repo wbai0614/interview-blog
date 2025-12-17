@@ -9,69 +9,77 @@ const PORT = process.env.PORT || 8080;
 app.set("view engine", "ejs");
 app.use(express.static("public"));
 
-// Get first 2-3 lines of Markdown as HTML
-function getExcerpt(filePath, maxLines = 3) {
-  const content = fs.readFileSync(filePath, "utf8");
-  const lines = content.split("\n").filter(line => line.trim().length > 0);
-  const excerptLines = lines.slice(0, maxLines).join("\n");
-  return marked(excerptLines);
-}
+function parseMeta(content) {
+  const meta = {};
+  const metaBlock = content.match(/<!--([\s\S]*?)-->/);
+  if (!metaBlock) return meta;
 
-// Extract tags from frontmatter comment
-function getTags(filePath) {
-  const content = fs.readFileSync(filePath, "utf8");
-  const match = content.match(/<!--\s*tags:\s*(.*?)\s*-->/);
-  return match && match[1] ? match[1].split(",").map(t => t.trim()) : [];
-}
-
-// Check for featured
-function isFeatured(filePath) {
-  const content = fs.readFileSync(filePath, "utf8");
-  return /featured:\s*true/.test(content);
-}
-
-// Get all posts
-function getPosts() {
-  const files = fs.readdirSync("./posts").filter(f => f.endsWith(".md"));
-  return files.map(file => {
-    const name = path.parse(file).name;
-    const slug = name;
-    const filePath = path.join(__dirname, "posts", file);
-    return {
-      slug,
-      filename: file,
-      excerpt: getExcerpt(filePath),
-      tags: getTags(filePath),
-      featured: isFeatured(filePath)
-    };
+  metaBlock[1].split("\n").forEach(line => {
+    const [key, ...rest] = line.split(":");
+    if (key && rest.length) {
+      meta[key.trim()] = rest.join(":").trim();
+    }
   });
+
+  return meta;
 }
 
-// Get unique tags
-function getAllTags(posts) {
-  return [...new Set(posts.flatMap(p => p.tags))];
+function readingTime(text) {
+  const words = text.split(/\s+/).length;
+  return Math.max(1, Math.round(words / 200));
 }
 
-// Homepage
+function getExcerpt(content) {
+  return marked(content.split("\n").slice(1, 5).join("\n"));
+}
+
+function getPosts() {
+  return fs.readdirSync("./posts")
+    .filter(f => f.endsWith(".md"))
+    .map(file => {
+      const slug = file.replace(".md", "");
+      const content = fs.readFileSync(`./posts/${file}`, "utf8");
+      const meta = parseMeta(content);
+
+      return {
+        slug,
+        title: slug.replace(/-/g, " "),
+        excerpt: getExcerpt(content),
+        tags: meta.tags?.split(",").map(t => t.trim()) || [],
+        description: meta.description || "",
+        featured: /featured:\s*true/.test(content),
+        readTime: readingTime(content)
+      };
+    });
+}
+
 app.get("/", (req, res) => {
-  const posts = getPosts();
-  const allTags = getAllTags(posts);
-  const selectedTag = req.query.tag;
+  const q = (req.query.q || "").toLowerCase();
+  const tag = req.query.tag;
 
-  const featuredPosts = posts.filter(p => p.featured && (!selectedTag || p.tags.includes(selectedTag)));
-  const regularPosts = posts.filter(p => !p.featured && (!selectedTag || p.tags.includes(selectedTag)));
+  let posts = getPosts();
 
-  res.render("index", { featuredPosts, regularPosts, allTags, selectedTag });
+  if (tag) posts = posts.filter(p => p.tags.includes(tag));
+  if (q) posts = posts.filter(p =>
+    p.title.includes(q) || p.description.toLowerCase().includes(q)
+  );
+
+  res.render("index", {
+    featured: posts.filter(p => p.featured),
+    posts: posts.filter(p => !p.featured),
+    tags: [...new Set(posts.flatMap(p => p.tags))],
+    q,
+    tag
+  });
 });
 
-// Individual post
 app.get("/post/:slug", (req, res) => {
-  const slug = req.params.slug;
-  const filePath = path.join(__dirname, "posts", slug + ".md");
-  if (!fs.existsSync(filePath)) return res.status(404).send("Post not found");
-  const mdContent = fs.readFileSync(filePath, "utf8");
-  const htmlContent = marked(mdContent);
-  res.render("post", { content: htmlContent });
+  const file = `./posts/${req.params.slug}.md`;
+  if (!fs.existsSync(file)) return res.sendStatus(404);
+
+  res.render("post", {
+    content: marked(fs.readFileSync(file, "utf8"))
+  });
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Running on ${PORT}`));

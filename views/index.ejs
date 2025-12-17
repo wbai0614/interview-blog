@@ -1,76 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
   <title>Interview Blog</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+
 <header class="navbar">
-  <div class="container">
-    <h1><a href="/">Interview Blog</a></h1>
-  </div>
+  <h1>Interview Blog</h1>
+  <p>Concise notes for coding, SQL, and system design interviews</p>
 </header>
 
-<div class="blog-container container">
+<div class="container">
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <h3>Tags</h3>
-    <ul>
-      <% allTags.forEach(tag => { %>
-        <li><a href="/?tag=<%= tag %>"><%= tag %></a></li>
-      <% }) %>
-    </ul>
-  </aside>
+  <!-- Search -->
+  <form class="search">
+    <input name="q" value="<%= q || '' %>" placeholder="Search topics..." />
+  </form>
 
-  <!-- Main content -->
-  <section class="posts-section">
+  <!-- Tags -->
+  <div class="tags">
+    <% tags.forEach(t => { %>
+      <a class="pill" href="/?tag=<%= t %>"><%= t %></a>
+    <% }) %>
+  </div>
 
-    <!-- Featured posts -->
-    <% if (featuredPosts.length) { %>
-      <h2>Featured Posts</h2>
-      <div class="posts-grid">
-        <% featuredPosts.forEach(p => { %>
-          <div class="post-card featured">
-            <a href="/post/<%= p.slug %>">
-              <h3><%= p.slug.replace('-', ' ') %></h3>
-            </a>
-            <div class="excerpt"><%- p.excerpt %></div>
-            <div class="post-tags">
-              <% p.tags.forEach(tag => { %>
-                <span class="tag"><%= tag %></span>
-              <% }) %>
-            </div>
-          </div>
-        <% }) %>
-      </div>
-    <% } %>
-
-    <!-- Regular posts -->
-    <h2>All Posts</h2>
-    <div class="posts-grid">
-      <% regularPosts.forEach(p => { %>
-        <div class="post-card">
+  <!-- Featured -->
+  <% if (featured.length) { %>
+    <h2>Featured</h2>
+    <div class="grid">
+      <% featured.forEach(p => { %>
+        <div class="card featured">
           <a href="/post/<%= p.slug %>">
-            <h3><%= p.slug.replace('-', ' ') %></h3>
+            <h3><%= p.title %></h3>
+            <p><%= p.description %></p>
+            <small><%= p.readTime %> min read</small>
           </a>
-          <div class="excerpt"><%- p.excerpt %></div>
-          <div class="post-tags">
-            <% p.tags.forEach(tag => { %>
-              <span class="tag"><%= tag %></span>
-            <% }) %>
-          </div>
         </div>
       <% }) %>
     </div>
+  <% } %>
 
-  </section>
+  <!-- Posts -->
+  <h2>All Posts</h2>
+  <div class="grid">
+    <% if (!posts.length) { %>
+      <p>No posts found.</p>
+    <% } %>
+
+    <% posts.forEach(p => { %>
+      <div class="card">
+        <a href="/post/<%= p.slug %>">
+          <h3><%= p.title %></h3>
+          <p><%= p.description %></p>
+          <small><%= p.readTime %> min read</small>
+        </a>
+      </div>
+    <% }) %>
+  </div>
 
 </div>
 
-<footer>
-  © 2025 Interview Blog
-</footer>
+<footer>© 2025 Interview Blog</footer>
 </body>
 </html>
