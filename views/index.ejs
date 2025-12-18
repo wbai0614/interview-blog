@@ -1,66 +1,95 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Interview Blog</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css" />
 </head>
+
 <body>
 
-<header class="navbar">
-  <h1>Interview Blog</h1>
-  <p>Concise notes for coding, SQL, and system design interviews</p>
-</header>
+  <!-- =========================
+       Hero / Navbar
+  ========================== -->
+  <header class="navbar">
+    <h1>Interview Blog</h1>
+    <p>
+      Clean, concise notes for coding, SQL, system design,
+      and engineering interviews.
+    </p>
+  </header>
 
-<div class="container">
+  <!-- =========================
+       Main Content
+  ========================== -->
+  <main class="container">
 
-  <!-- Search -->
-  <form class="search">
-    <input name="q" value="<%= q || '' %>" placeholder="Search topics..." />
-  </form>
+    <!-- Search -->
+    <form class="search" method="GET" action="/">
+      <input
+        type="text"
+        name="q"
+        placeholder="Search topics (Python, SQL, System Design...)"
+        value="<%= q || '' %>"
+        autocomplete="off"
+      />
+    </form>
 
-  <!-- Tags -->
-  <div class="tags">
-    <% tags.forEach(t => { %>
-      <a class="pill" href="/?tag=<%= t %>"><%= t %></a>
-    <% }) %>
-  </div>
-
-  <!-- Featured -->
-  <% if (featured.length) { %>
-    <h2>Featured</h2>
-    <div class="grid">
-      <% featured.forEach(p => { %>
-        <div class="card featured">
-          <a href="/post/<%= p.slug %>">
-            <h3><%= p.title %></h3>
-            <p><%= p.description %></p>
-            <small><%= p.readTime %> min read</small>
-          </a>
-        </div>
+    <!-- Tags -->
+    <div class="tags">
+      <% tags.forEach(tag => { %>
+        <a class="pill" href="/?tag=<%= tag %>"><%= tag %></a>
       <% }) %>
     </div>
-  <% } %>
 
-  <!-- Posts -->
-  <h2>All Posts</h2>
-  <div class="grid">
-    <% if (!posts.length) { %>
-      <p>No posts found.</p>
+    <!-- Featured Posts -->
+    <% if (featured.length) { %>
+      <section>
+        <h2>Featured</h2>
+        <div class="grid">
+          <% featured.forEach(post => { %>
+            <article class="card featured">
+              <a href="/post/<%= post.slug %>">
+                <h3><%= post.title %></h3>
+                <p><%= post.description %></p>
+                <small><%= post.readTime %> min read</small>
+              </a>
+            </article>
+          <% }) %>
+        </div>
+      </section>
     <% } %>
 
-    <% posts.forEach(p => { %>
-      <div class="card">
-        <a href="/post/<%= p.slug %>">
-          <h3><%= p.title %></h3>
-          <p><%= p.description %></p>
-          <small><%= p.readTime %> min read</small>
-        </a>
+    <!-- All Posts -->
+    <section>
+      <h2>All Posts</h2>
+
+      <% if (!posts.length) { %>
+        <p>No posts found.</p>
+      <% } %>
+
+      <div class="grid">
+        <% posts.forEach(post => { %>
+          <article class="card">
+            <a href="/post/<%= post.slug %>">
+              <h3><%= post.title %></h3>
+              <p><%= post.description %></p>
+              <small><%= post.readTime %> min read</small>
+            </a>
+          </article>
+        <% }) %>
       </div>
-    <% }) %>
-  </div>
+    </section>
 
-</div>
+  </main>
 
-<footer>© 2025 Interview Blog</footer>
+  <!-- =========================
+       Footer
+  ========================== -->
+  <footer>
+    © 2025 Interview Blog
+  </footer>
+
 </body>
 </html>

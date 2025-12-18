@@ -6,80 +6,97 @@ const { marked } = require("marked");
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// --------------------
+// App setup
+// --------------------
 app.set("view engine", "ejs");
 app.use(express.static("public"));
 
-function parseMeta(content) {
-  const meta = {};
-  const metaBlock = content.match(/<!--([\s\S]*?)-->/);
-  if (!metaBlock) return meta;
-
-  metaBlock[1].split("\n").forEach(line => {
-    const [key, ...rest] = line.split(":");
-    if (key && rest.length) {
-      meta[key.trim()] = rest.join(":").trim();
-    }
-  });
-
-  return meta;
-}
-
-function readingTime(text) {
-  const words = text.split(/\s+/).length;
-  return Math.max(1, Math.round(words / 200));
-}
-
-function getExcerpt(content) {
-  return marked(content.split("\n").slice(1, 5).join("\n"));
-}
-
+// --------------------
+// Helpers
+// --------------------
 function getPosts() {
-  return fs.readdirSync("./posts")
-    .filter(f => f.endsWith(".md"))
-    .map(file => {
-      const slug = file.replace(".md", "");
-      const content = fs.readFileSync(`./posts/${file}`, "utf8");
-      const meta = parseMeta(content);
+  const postsDir = path.join(__dirname, "posts");
 
-      return {
-        slug,
-        title: slug.replace(/-/g, " "),
-        excerpt: getExcerpt(content),
-        tags: meta.tags?.split(",").map(t => t.trim()) || [],
-        description: meta.description || "",
-        featured: /featured:\s*true/.test(content),
-        readTime: readingTime(content)
-      };
-    });
+  return fs.readdirSync(postsDir).map(file => {
+    const content = fs.readFileSync(path.join(postsDir, file), "utf-8");
+
+    const title =
+      content.match(/^# (.*)/)?.[1] || file.replace(".md", "");
+
+    const description =
+      content.split("\n").find(l => l && !l.startsWith("#")) || "";
+
+    const tags =
+      content.match(/<!-- tags:(.*?)-->/)?.[1]
+        ?.split(",")
+        .map(t => t.trim()) || [];
+
+    const featured = content.includes("featured: true");
+
+    return {
+      slug: file.replace(".md", ""),
+      title,
+      description,
+      tags,
+      featured,
+      readTime: Math.max(1, Math.ceil(content.split(" ").length / 200)),
+      content
+    };
+  });
 }
 
+// --------------------
+// Routes
+// --------------------
 app.get("/", (req, res) => {
-  const q = (req.query.q || "").toLowerCase();
+  const q = req.query.q?.toLowerCase() || "";
   const tag = req.query.tag;
 
   let posts = getPosts();
 
-  if (tag) posts = posts.filter(p => p.tags.includes(tag));
-  if (q) posts = posts.filter(p =>
-    p.title.includes(q) || p.description.toLowerCase().includes(q)
-  );
+  if (q) {
+    posts = posts.filter(p =>
+      p.title.toLowerCase().includes(q) ||
+      p.content.toLowerCase().includes(q)
+    );
+  }
+
+  if (tag) {
+    posts = posts.filter(p => p.tags.includes(tag));
+  }
+
+  const featured = posts.filter(p => p.featured);
+  const tags = [...new Set(posts.flatMap(p => p.tags))];
 
   res.render("index", {
-    featured: posts.filter(p => p.featured),
-    posts: posts.filter(p => !p.featured),
-    tags: [...new Set(posts.flatMap(p => p.tags))],
-    q,
-    tag
+    posts,
+    featured,
+    tags,
+    q
   });
 });
 
+// 🔥 THIS IS THE IMPORTANT FIX
 app.get("/post/:slug", (req, res) => {
-  const file = `./posts/${req.params.slug}.md`;
-  if (!fs.existsSync(file)) return res.sendStatus(404);
+  const filePath = path.join(__dirname, "posts", `${req.params.slug}.md`);
 
-  res.render("post", {
-    content: marked(fs.readFileSync(file, "utf8"))
-  });
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send("Post not found");
+  }
+
+  const markdown = fs.readFileSync(filePath, "utf-8");
+
+  const post = {
+    title: markdown.match(/^# (.*)/)?.[1] || "Untitled",
+    html: marked.parse(markdown)
+  };
+
+  // ✅ post IS NOW PASSED CORRECTLY
+  res.render("post", { post });
 });
 
-app.listen(PORT, () => console.log(`Running on ${PORT}`));
+// --------------------
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
