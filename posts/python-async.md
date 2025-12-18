@@ -1,17 +1,27 @@
-<!-- tags: python, async, coding -->
+<!--
+title: Python: Asynchronous Programming
+tags: python, async, concurrency, interview
+description: Introduction to Python async/await, asyncio, and concurrent programming concepts.
+featured: false
+-->
 
-# Python Asyncio
+# Python: Asynchronous Programming
 
-- Asynchronous programming for I/O bound tasks  
-- `async` and `await` keywords  
-- Event loop executes coroutines
+Asynchronous programming in Python allows you to write **non-blocking code** for I/O-bound operations, improving performance in concurrent scenarios.
+
+## async / await
+
+- `async` defines a coroutine  
+- `await` pauses coroutine until awaited task completes  
 
 ```python
 import asyncio
 
-async def main():
-    print("Hello")
+async def say_hello():
     await asyncio.sleep(1)
-    print("World")
+    print("Hello")
+
+async def main():
+    await asyncio.gather(say_hello(), say_hello())
 
 asyncio.run(main())

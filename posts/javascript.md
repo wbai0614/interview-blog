@@ -1,14 +1,20 @@
-<!-- tags: javascript, coding, interview -->
+<!--
+title: JavaScript
+tags: javascript, programming, interview
+description: Key JavaScript concepts, tips, and common interview questions.
+featured: false
+-->
 
-# JavaScript Closures
+# JavaScript
 
-- Closures are functions with access to outer scope variables.
-- Useful for private variables and callbacks.
+JavaScript is the core language for web development and commonly asked in front-end and full-stack interviews.
+
+## Variables
+
+- `var`: function-scoped, avoid using in modern code  
+- `let`: block-scoped, mutable  
+- `const`: block-scoped, immutable  
 
 ```javascript
-function makeCounter() {
-  let count = 0;
-  return function() { return ++count; }
-}
-const counter = makeCounter();
-console.log(counter()); // 1
+let x = 10;
+const y = 20;
