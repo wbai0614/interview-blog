@@ -1,8 +1,19 @@
-<!-- tags: system-design, scalability, interview; featured: true -->
+<!--
+title: System Design
+tags: system design, scalability, interview
+description: Notes on designing scalable systems and common patterns.
+featured: false
+-->
 
-# System Design Tip
+# System Design
 
-- Start with requirements
-- Design APIs
-- Model data
-- Consider scalability and reliability
+System design interviews evaluate your ability to build scalable, reliable, and maintainable systems. Focus on architecture, trade-offs, and best practices.
+
+## Load Balancers
+
+- Distribute traffic across multiple servers  
+- Improve availability and fault tolerance  
+- Common types: Round-robin, Least Connections, IP Hash  
+
+```text
+User --> LB --> Web Server Cluster --> Database

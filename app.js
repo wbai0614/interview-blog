@@ -15,50 +15,103 @@ app.use(express.static("public"));
 // --------------------
 // Helpers
 // --------------------
+
+// Parse frontmatter metadata from Markdown
+function parseFrontmatter(content) {
+  const meta = {
+    title: null,
+    tags: [],
+    description: "",
+    featured: false
+  };
+
+  const match = content.match(/<!--([\s\S]*?)-->/);
+  if (!match) return meta;
+
+  match[1].split("\n").forEach(line => {
+    const [key, ...rest] = line.split(":");
+    if (!key || rest.length === 0) return;
+
+    const value = rest.join(":").trim();
+
+    switch (key.trim().toLowerCase()) {
+      case "title":
+        meta.title = value;
+        break;
+      case "tags":
+        meta.tags = value.split(",").map(t => t.trim());
+        break;
+      case "description":
+        meta.description = value;
+        break;
+      case "featured":
+        meta.featured = value.toLowerCase() === "true";
+        break;
+    }
+  });
+
+  return meta;
+}
+
+// Estimate reading time
+function readingTime(text) {
+  const words = text.split(/\s+/).length;
+  return Math.max(1, Math.round(words / 200));
+}
+
+// Get excerpt for index page
+function getExcerpt(content) {
+  const lines = content.split("\n");
+  // Skip frontmatter
+  const firstContentLine = lines.findIndex(l => !l.startsWith("<!--") && l.trim() !== "");
+  return marked.parse(lines.slice(firstContentLine, firstContentLine + 5).join("\n"));
+}
+
+// Read all posts
 function getPosts() {
   const postsDir = path.join(__dirname, "posts");
 
-  return fs.readdirSync(postsDir).map(file => {
-    const content = fs.readFileSync(path.join(postsDir, file), "utf-8");
+  return fs.readdirSync(postsDir)
+    .filter(f => f.endsWith(".md"))
+    .map(file => {
+      const content = fs.readFileSync(path.join(postsDir, file), "utf-8");
+      const meta = parseFrontmatter(content);
 
-    const title =
-      content.match(/^# (.*)/)?.[1] || file.replace(".md", "");
+      // Title fallback: frontmatter > first H1 > slug
+      const title =
+        meta.title ||
+        content.match(/^# (.*)/m)?.[1] ||
+        file.replace(".md", "").replace(/-/g, " ");
 
-    const description =
-      content.split("\n").find(l => l && !l.startsWith("#")) || "";
-
-    const tags =
-      content.match(/<!-- tags:(.*?)-->/)?.[1]
-        ?.split(",")
-        .map(t => t.trim()) || [];
-
-    const featured = content.includes("featured: true");
-
-    return {
-      slug: file.replace(".md", ""),
-      title,
-      description,
-      tags,
-      featured,
-      readTime: Math.max(1, Math.ceil(content.split(" ").length / 200)),
-      content
-    };
-  });
+      return {
+        slug: file.replace(".md", ""),
+        title,
+        excerpt: getExcerpt(content),
+        tags: meta.tags,
+        description: meta.description || "",
+        featured: meta.featured,
+        readTime: readingTime(content),
+        content
+      };
+    });
 }
 
 // --------------------
 // Routes
 // --------------------
+
+// Homepage
 app.get("/", (req, res) => {
-  const q = req.query.q?.toLowerCase() || "";
+  const q = (req.query.q || "").toLowerCase();
   const tag = req.query.tag;
 
   let posts = getPosts();
 
   if (q) {
-    posts = posts.filter(p =>
-      p.title.toLowerCase().includes(q) ||
-      p.content.toLowerCase().includes(q)
+    posts = posts.filter(
+      p =>
+        p.title.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q)
     );
   }
 
@@ -69,15 +122,10 @@ app.get("/", (req, res) => {
   const featured = posts.filter(p => p.featured);
   const tags = [...new Set(posts.flatMap(p => p.tags))];
 
-  res.render("index", {
-    posts,
-    featured,
-    tags,
-    q
-  });
+  res.render("index", { posts, featured, tags, q });
 });
 
-// 🔥 THIS IS THE IMPORTANT FIX
+// Individual post page
 app.get("/post/:slug", (req, res) => {
   const filePath = path.join(__dirname, "posts", `${req.params.slug}.md`);
 
@@ -86,13 +134,19 @@ app.get("/post/:slug", (req, res) => {
   }
 
   const markdown = fs.readFileSync(filePath, "utf-8");
+  const meta = parseFrontmatter(markdown);
+
+  // Title priority: frontmatter > first H1 > slug
+  const title =
+    meta.title ||
+    markdown.match(/^# (.*)/m)?.[1] ||
+    req.params.slug.replace(/-/g, " ");
 
   const post = {
-    title: markdown.match(/^# (.*)/)?.[1] || "Untitled",
+    title,
     html: marked.parse(markdown)
   };
 
-  // ✅ post IS NOW PASSED CORRECTLY
   res.render("post", { post });
 });
 

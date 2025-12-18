@@ -1,19 +1,19 @@
 <!--
-tags: python, coding, interview
-description: Understand the key differences between lists and tuples in Python.
+title: Python
+tags: python, programming, interview
+description: Key Python concepts, tips, and common interview questions.
+featured: true
 -->
 
-# Python: List vs Tuple
+# Python
 
-## Key Differences
+Python is a versatile programming language commonly used in interviews. It is readable, dynamic, and widely adopted.
 
-| Feature | List | Tuple |
-|------|------|-------|
-| Mutability | ✅ Mutable | ❌ Immutable |
-| Performance | Slower | Faster |
-| Use case | Dynamic data | Fixed data |
+## Lists vs Tuples
 
-## When to Use Tuple
-- Dictionary keys
-- Constants
-- Return multiple values
+- **List**: mutable, ordered
+- **Tuple**: immutable, ordered
+
+```python
+my_list = [1, 2, 3]
+my_tuple = (1, 2, 3)
